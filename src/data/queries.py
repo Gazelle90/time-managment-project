@@ -1,5 +1,4 @@
 import psycopg2
-from data.queries import load_db_config
 from datetime import date, time
 
 #functions related to customers or comanies 
@@ -97,11 +96,30 @@ def add_time_entry(person_id: int, company_id: int ,date : date ,start_time: tim
             con.close()
     return row
 
-def find_time_entries() -> tuple:
-    pass 
+def find_time_entries(person_id: int,company_id: int) -> tuple:
+    con = None
+    try:
+        con = psycopg2.connect(**load_db_config())
+        cursor = con.cursor()
+        cursor.execute(
+                """
+                SELECT * FROM times_daily
+                WHERE person_id = %s AND company_id = %s
+                """,
+                (person_id, company_id))
+        rows = cursor.fetchall()
+        return rows
+    except psycopg2.DatabaseError:
+        if con is not None:
+            con.rollback()
+        raise
+    finally:
+        if con is not None:
+            con.close()
 
-def delete_time_entries(person_id: int,company_id: int, work_date: date, start_time: time
-) -> int:
+     
+
+def delete_time_entries(person_id: int,company_id: int, work_date: date, start_time: time) -> int:
     con = None
     try:
         con = psycopg2.connect(**load_db_config())
