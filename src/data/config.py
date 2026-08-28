@@ -84,3 +84,17 @@ def get_database_credentials():
 
     return host, database, user, password, port
 
+def get_blob_connection_string():
+    """Get Blob Storage connection string from Azure Key Vault."""
+
+    credential = DefaultAzureCredential()
+
+    secret_client = SecretClient(
+        vault_url=KEY_VAULT_URL,
+        credential=credential
+    )
+
+    return secret_client.get_secret(
+        "blob-storage-connection-string"
+    ).value
+
