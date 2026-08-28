@@ -4,17 +4,10 @@ from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 from azure.storage.blob import BlobServiceClient
 
-KEY_VAULT_URL = os.getenv(
-    "AZURE_KEY_VAULT_URL", "https://time-management-kv.vault.azure.net/"
-)
+from src.data.config import get_blob_connection_string
 
-credential = DefaultAzureCredential()
-
-secret_client = SecretClient(vault_url=KEY_VAULT_URL, credential=credential)
-
-blob_service_client = BlobServiceClient(
-    account_url="https://nazretteampstorage02.blob.core.windows.net/",
-    credential=credential,
+blob_service_client = BlobServiceClient.from_connection_string(
+    get_blob_connection_string()
 )
 
 
