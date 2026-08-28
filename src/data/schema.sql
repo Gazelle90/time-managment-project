@@ -39,8 +39,6 @@ CREATE TABLE times_daily (
 ('Sofia Persson', 'sofia@example.com'),
 ('Daniel Eriksson', 'daniel@example.com');*/
 
-
-
 /*INSERT INTO company (name) VALUES
 ('IKEA'),
 ('Volvo'),
@@ -48,6 +46,16 @@ CREATE TABLE times_daily (
 ('Ericsson'),
 ('H&M');*/
 
-SELECT * from person;
-
-SELECT * FROM company;
+CREATE VIEW view_weekly AS
+SELECT
+    c.id AS company_id,
+    c.name AS company_name,
+    DATE_TRUNC('week', t.date)::date AS week_start,
+    (DATE_TRUNC('week', t.date) + INTERVAL '6 days')::date AS week_end,
+    SUM(ROUND(EXTRACT(EPOCH FROM (t.end_time - t.start_time - t.lunch_break)) / 3600.0, 2)) AS total_hours
+FROM company c
+JOIN times_daily t ON c.id = t.company_id
+GROUP BY
+    c.id,
+    c.name,
+    DATE_TRUNC('week', t.date);
