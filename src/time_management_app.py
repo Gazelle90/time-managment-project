@@ -1,10 +1,21 @@
-from flask import Flask, request , jsonify 
+from flask import Flask, request , jsonify
+from datetime import date 
 
 from src.data.queries import (
     list_customers, find_consultant_by_id ,list_consultants, find_customer_by_id,
       add_time_entry, find_time_entries,delete_time_entries,reporting_balance)
 
 app = Flask(__name__)
+
+@app.route("/", methods=["GET"])
+def hello():
+    return jsonify({"message": "Skillio person API up and running"})
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
+
 
 #consultants
 
@@ -46,36 +57,40 @@ def http_get_customer(id :int):
 
 @app.route("/time/<int:person_id>/<int:company_id>", methods=["GET"])
 def http_find_time_entries(person_id: int,company_id: int):
-    row = find_time_entries(person_id, company_id)
-    if row is None:
+    rows = find_time_entries(person_id, company_id)
+    if not rows:
         return jsonify({"error": "time entry not found"}), 404
-    return jsonify({
-    "id": row[0],
-    "person_id": row[1],
-    "company_id": row[2],
-    "date": row[3],
-    "start_time": row[4],
-    "end_time": row[5],
-    "lunch_break": row[6],
-    "hours": row[7]
-})
+    return jsonify([
+    {
+        "id": row[0],
+        "person_id": row[1],
+        "company_id": row[2],
+        "date": row[3].isoformat(),
+        "start_time": row[4].isoformat(),
+        "end_time": row[5].isoformat(),
+        "hours": row[6].isoformat() if row[6] is not None else None,
+        "lunch_break": row[7]
+        }
+    for row in rows
+])
 
 
-@app.route("/time/<int:id>", methods=["DELETE"])
-def http_delete_time_entries(id: int):
-    rows = delete_time_entries(id)
+@app.route("/time/delete/<int:person_id>/<int:company_id>/<work_date>", methods=["DELETE"])
+def http_delete_time_entries(person_id: int , company_id: int, work_date: date ):
+    rows = delete_time_entries(person_id, company_id, work_date)
     if rows == 0:
         return jsonify({"error": "person not found"}), 404
     return ("", 204)
 
-@app.route("/time/", methods=["POST"])
+@app.route("/time/add/", methods=["POST"])
 def http_add_time_entry():
     data = request.get_json(silent=True)
+    print(data)
 
-    if not data or "person_id" not in data or "company_id" not in data or "start_time" not in data or "end_time" not in data :
-        return jsonify({"error": "person, company id, start time and end time  are required"}), 400
+    if not data or "person_id" not in data or "company_id" not in data or "date" not in data or "start_time" not in data or "end_time" not in data:
+        return jsonify({"error": "person id , company id, date , start time and end time  are required"}), 400
 
-    new_id = add_time_entry(data["person_id"], data["company_id"],
+    new_id = add_time_entry(data["person_id"], data["company_id"],data["date"],
                              data["start_time"] , data["end_time"], data.get("lunch_break", 0))
     return jsonify({"id": new_id, **data}), 201
 

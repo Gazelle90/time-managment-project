@@ -1,6 +1,7 @@
 from datetime import date, time
 
 import psycopg2
+
 from src.data.database import get_connection
 
 
@@ -12,7 +13,7 @@ def list_customers() -> list[tuple]:
         cursor.execute("SELECT * FROM company")
         rows = cursor.fetchall()
 
-    except (Exception, psycopg2.DatabaseError) as error:
+    except Exception as error:
         if con is not None:
             con.rollback()
         raise
@@ -29,7 +30,7 @@ def find_customer_by_id(company_id: int) -> tuple | None:
         cursor = con.cursor()
         cursor.execute("SELECT * FROM company WHERE id = %s", (company_id,))
         rows = cursor.fetchone()
-    except (Exception, psycopg2.DatabaseError) as error:
+    except Exception as error:
         if con is not None:
             con.rollback()
         raise
@@ -47,7 +48,7 @@ def list_consultants() -> list[tuple]:
         cursor.execute("SELECT * FROM person")
         rows = cursor.fetchall()
 
-    except (Exception, psycopg2.DatabaseError) as error:
+    except Exception as error:
         if con is not None:
             con.rollback()
         raise
@@ -64,7 +65,7 @@ def find_consultant_by_id(person_id: int) -> tuple | None:
         cursor = con.cursor()
         cursor.execute("SELECT * FROM person WHERE id = %s", (person_id,))
         rows = cursor.fetchone()
-    except (Exception, psycopg2.DatabaseError) as error:
+    except Exception as error:
         if con is not None:
             con.rollback()
         raise
@@ -83,7 +84,7 @@ def add_time_entry(
     date: date,
     start_time: time,
     end_time: time,
-    lunch_break: int,
+    lunch_break: time,
 ) -> tuple:
     con = None
     try:
@@ -91,20 +92,21 @@ def add_time_entry(
         cursor = con.cursor()
         cursor.execute(
             "INSERT INTO times_daily"
-            " ( person_id, company_id,date, start_time, end_time, lunch_break) "
-            "VALUES (%s,%s,%s,%s,%s,%s)",
+            " ( person_id, company_id, date, start_time, end_time, lunch_break) "
+            "VALUES (%s,%s,%s,%s,%s,%s)"
+            "RETURNING id",
             (person_id, company_id, date, start_time, end_time, lunch_break),
         )
-
         row = cursor.fetchone()
-    except (Exception, psycopg2.DatabaseError) as error:
+        con.commit()
+        return row[0]
+    except Exception as error:
         if con is not None:
             con.rollback()
         raise
     finally:
         if con is not None:
             con.close()
-    return row
 
 
 def find_time_entries(person_id: int, company_id: int) -> tuple:
@@ -114,14 +116,24 @@ def find_time_entries(person_id: int, company_id: int) -> tuple:
         cursor = con.cursor()
         cursor.execute(
             """
-                SELECT * FROM times_daily
-                WHERE person_id = %s AND company_id = %s
-                """,
+        SELECT
+            id,
+            person_id,
+            company_id,
+            date,
+            start_time,
+            end_time,
+            lunch_break,
+            hours
+        FROM times_daily
+        WHERE person_id = %s AND company_id = %s
+        """,
             (person_id, company_id),
         )
+
         rows = cursor.fetchall()
         return rows
-    except psycopg2.DatabaseError:
+    except Exception as error:
         if con is not None:
             con.rollback()
         raise
@@ -130,9 +142,7 @@ def find_time_entries(person_id: int, company_id: int) -> tuple:
             con.close()
 
 
-def delete_time_entries(
-    person_id: int, company_id: int, work_date: date, start_time: time
-) -> int:
+def delete_time_entries(person_id: int, company_id: int, work_date: date) -> int:
     con = None
     try:
         con = get_connection()
@@ -143,14 +153,14 @@ def delete_time_entries(
             WHERE person_id = %s
               AND company_id = %s
               AND date = %s
-              AND start_time = %s
+
             """,
-            (person_id, company_id, work_date, start_time),
+            (person_id, company_id, work_date),
         )
         rows = cursor.rowcount
         con.commit()
         return rows
-    except psycopg2.DatabaseError:
+    except Exception as error:
         if con is not None:
             con.rollback()
         raise
@@ -175,7 +185,7 @@ def weekly_report_companies() -> tuple:
             """,
         )
         rows = cursor.fetchall()
-    except (Exception, psycopg2.DatabaseError) as error:
+    except Exception as error:
         if con is not None:
             con.rollback()
         raise
