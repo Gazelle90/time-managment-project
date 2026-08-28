@@ -1,5 +1,6 @@
 from flask import Flask, request , jsonify
 from datetime import date 
+from psycopg2.errors import ForeignKeyViolation
 
 from src.data.queries import (
     list_customers, find_consultant_by_id ,list_consultants, find_customer_by_id,
@@ -86,13 +87,19 @@ def http_delete_time_entries(person_id: int , company_id: int, work_date: date )
 def http_add_time_entry():
     data = request.get_json(silent=True)
     print(data)
+    try:
+        if not data or "person_id" not in data or "company_id" not in data or "date" not in data or "start_time" not in data or "end_time" not in data:
+         return jsonify({"error": "person id , company id, date , start time and end time  are required"}), 400
 
-    if not data or "person_id" not in data or "company_id" not in data or "date" not in data or "start_time" not in data or "end_time" not in data:
-        return jsonify({"error": "person id , company id, date , start time and end time  are required"}), 400
-
-    new_id = add_time_entry(data["person_id"], data["company_id"],data["date"],
+        new_id = add_time_entry(data["person_id"], data["company_id"],data["date"],
                              data["start_time"] , data["end_time"], data.get("lunch_break", 0))
-    return jsonify({"id": new_id, **data}), 201
+        return jsonify({"id": new_id, **data}), 201
+    except ForeignKeyViolation:
+        return jsonify({
+            "error": "Person or company does not exist"
+        }), 404
+
+ 
 
 ####reporting_balance app #####
 
