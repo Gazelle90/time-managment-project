@@ -1,4 +1,5 @@
 import textwrap
+from datetime import date, timedelta
 
 from flask import Flask
 from tabulate import tabulate
@@ -8,12 +9,11 @@ from src.data.queries import *
 
 app = Flask(__name__)
 
-FILENAME = "report.txt"
-
 
 @app.route("/report")
-def hello_world():
-    week = "2026-08-24"
+def generate_report():
+    week = (date.today() - timedelta(days=date.today().weekday())).isoformat()
+    FILENAME = f"{week}-report.txt"
 
     with open(FILENAME, "w+") as f:
         f.write(f"=== Time Report — Week of {week} ===")

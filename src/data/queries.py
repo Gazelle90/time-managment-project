@@ -1,7 +1,6 @@
 from datetime import date, time
 
 import psycopg2
-
 from src.data.database import get_connection
 
 

@@ -6,10 +6,5 @@ def get_connection():
     host, database, user, password, port = get_database_credentials()
 
     return psycopg2.connect(
-        host=host,
-        database=database,
-        user=user,
-        password=password,
-        port=port
+        host=host, database=database, user=user, password=password, port=port
     )
-

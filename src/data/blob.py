@@ -3,7 +3,6 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 from azure.storage.blob import BlobServiceClient
-
 from src.data.config import get_blob_connection_string
 
 blob_service_client = BlobServiceClient.from_connection_string(
