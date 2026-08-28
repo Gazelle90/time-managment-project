@@ -39,16 +39,12 @@ CREATE TABLE times_daily (
 ('Sofia Persson', 'sofia@example.com'),
 ('Daniel Eriksson', 'daniel@example.com');*/
 
-
-
 /*INSERT INTO company (name) VALUES
 ('IKEA'),
 ('Volvo'),
 ('Spotify'),
 ('Ericsson'),
 ('H&M');*/
-
-DROP VIEW view_weekly;
 
 CREATE VIEW view_weekly AS
 SELECT
