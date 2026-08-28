@@ -59,7 +59,3 @@ GROUP BY
     c.id,
     c.name,
     DATE_TRUNC('week', t.date);
-
-SELECT * from person;
-
-SELECT * FROM company;
